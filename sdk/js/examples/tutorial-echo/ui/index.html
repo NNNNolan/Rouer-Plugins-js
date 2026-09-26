@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JS 开发教程</title>
+  <!-- 自包含教学页面：不依赖外部字体、CDN、构建框架或浏览器存储。 -->
+  <style>
+    :root{color-scheme:light;--ink:#172554;--muted:#475569;--line:#cbd5e1;--accent:#1d4ed8;--surface:#f5f7fb}
+    *{box-sizing:border-box}
+    body{margin:0;padding:16px;color:var(--ink);background:#fff;font:15px/1.6 system-ui,"Microsoft YaHei",sans-serif}
+    main{max-width:800px;margin:auto}
+    h1{margin:0;font-size:24px;letter-spacing:-.03em}h2{font-size:18px;margin:0 0 8px}
+    p{color:var(--muted);margin:8px 0 16px}
+    section{border-top:1px solid var(--line);padding:20px 0}
+    .controls{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:12px 0}
+    label{display:grid;gap:4px;color:var(--muted)}
+    button,input{font:inherit;min-height:44px;border:1px solid var(--line);border-radius:6px;padding:8px 12px}
+    input{width:100px}button{background:#fff;color:var(--ink);cursor:pointer}
+    button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+    pre,code{font-family:Consolas,"Cascadia Code",monospace}
+    pre{margin:12px 0 0;padding:14px;background:var(--surface);border-radius:6px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+    progress{display:block;width:100%;height:14px;accent-color:var(--accent)}
+    #message{min-height:1.6em;color:#b91c1c}
+    @media(max-width:480px){body{padding:12px}.controls button{flex:1 1 120px}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Echo 与后台任务</h1>
+  <p>模型 <code>tutorial-echo/echo</code> 回显普通文本。下面只演示状态、任务进度与取消，不访问网络，也不产生真实积分。</p>
+  <p id="message" role="status" aria-live="polite"></p>
+  <section aria-labelledby="status-title">
+    <h2 id="status-title">当前插件版本</h2>
+    <p>状态保存在本版本内存中，重载后重新开始；Cron 在下一个整点更新演示计数。</p>
+    <button id="refresh" type="button">刷新版本状态</button>
+    <pre id="status">加载中…</pre>
+  </section>
+  <section aria-labelledby="job-title">
+    <h2 id="job-title">可取消的演示任务</h2>
+    <p>每步等待 250 毫秒。同一个活跃任务不会重复入队；请求取消后，仍需等待实际结束。</p>
+    <div class="controls">
+      <label for="steps">演示步数（1–20）<input id="steps" type="number" min="1" max="20" step="1" value="12" required></label>
+      <button id="start" class="primary" type="button">启动演示任务</button>
+      <button id="query" type="button" disabled>查询当前任务</button>
+      <button id="cancel" type="button" disabled>请求取消</button>
+    </div>
+    <progress id="progress" value="0" max="1" aria-label="演示任务进度"></progress>
+    <pre id="job" role="status" aria-live="polite">还没有创建任务。</pre>
+  </section>
+</main>
+<script>
+  // 这是浏览器脚本，可以使用 DOM/setTimeout；后端 Jint 不具备这些全局对象。
+  // Router2API 由宿主父页面在 srcdoc 中注入，自动处理当前插件路由、Cookie 和 CSRF。
+  const statusView = document.getElementById("status"), jobView = document.getElementById("job");
+  const message = document.getElementById("message"), progress = document.getElementById("progress");
+  const startButton = document.getElementById("start"), queryButton = document.getElementById("query");
+  const cancelButton = document.getElementById("cancel"), refreshButton = document.getElementById("refresh");
+  const stepsInput = document.getElementById("steps");
+  let currentJob = null, polling = false, closed = false;
+
+  /** 只调用相对管理路由，不自行添加插件前缀或在页面中保存凭据。 */
+  function request(method, route, body) {
+    return window.Router2API.request(method, route, body);
+  }
+
+  /** 只用 textContent 展示外部数据，禁止把任务错误字符串作为 HTML 插入。 */
+  function showError(error) {
+    message.textContent = error instanceof Error ? error.message : "请求失败，请稍后查询任务状态。";
+  }
+
+  /** 以宿主实际状态显示是否完成，不把“收到取消请求”当成任务已经退出。 */
+  function renderJob(job) {
+    currentJob = job;
+    jobView.textContent = JSON.stringify(job, null, 2);
+    const snapshot = job.progress;
+    progress.max = Number.isFinite(snapshot?.total) && snapshot.total > 0 ? snapshot.total : 1;
+    progress.value = Number.isFinite(snapshot?.completed) ? snapshot.completed : 0;
+    queryButton.disabled = false;
+    cancelButton.disabled = !["Queued", "Running"].includes(job.state);
+  }
+
+  /** 查询失败由操作者重试，不无界重试或同时开启多个轮询循环。 */
+  async function poll(job) {
+    if (polling) return;
+    polling = true;
+    try {
+      renderJob(job);
+      for (let count = 0; count < 120 && !closed && ["Queued", "Running"].includes(currentJob.state); count++) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        if (closed) return;
+        renderJob(await request("GET", "jobs/status?id=" + encodeURIComponent(currentJob.id)));
+      }
+      if (!closed && ["Queued", "Running"].includes(currentJob.state))
+        message.textContent = "自动轮询已暂停，请点击“查询当前任务”。";
+    } finally {
+      polling = false;
+    }
+  }
+
+  /** GET 状态只读取演示信息，不会触发余额查询或运行 Cron。 */
+  async function refresh() {
+    try {
+      message.textContent = "";
+      statusView.textContent = JSON.stringify(await request("GET", "status"), null, 2);
+    } catch (error) { showError(error); }
+  }
+
+  startButton.onclick = async () => {
+    // 浏览器校验改善体验，后端仍独立校验 JSON 中的 steps。
+    if (!stepsInput.reportValidity()) return;
+    startButton.disabled = true;
+    message.textContent = "";
+    try { await poll(await request("POST", "jobs/start", { steps: Number(stepsInput.value) })); }
+    catch (error) { showError(error); }
+    finally { startButton.disabled = false; }
+  };
+  queryButton.onclick = async () => {
+    if (polling || !currentJob) return;
+    message.textContent = "";
+    try { await poll(await request("GET", "jobs/status?id=" + encodeURIComponent(currentJob.id))); }
+    catch (error) { showError(error); }
+  };
+  cancelButton.onclick = async () => {
+    if (!currentJob) return;
+    cancelButton.disabled = true;
+    try {
+      const result = await request("POST", "jobs/cancel", { id: currentJob.id });
+      message.textContent = result.accepted ? "已请求取消，等待任务实际退出。" : "未接受取消，请查询最终状态。";
+      if (!polling) await poll(await request("GET", "jobs/status?id=" + encodeURIComponent(currentJob.id)));
+    } catch (error) { showError(error); }
+    finally { cancelButton.disabled = !["Queued", "Running"].includes(currentJob?.state); }
+  };
+  refreshButton.onclick = refresh;
+  // 关闭页面只停止轮询，不会隐式取消宿主 job；取消需要显式点击按钮。
+  window.addEventListener("pagehide", () => { closed = true; });
+  if (window.Router2API) refresh();
+  else {
+    message.textContent = "请安装此插件，并从 Router2API 管理后台打开页面；直接打开 HTML 没有宿主桥。";
+    statusView.textContent = "未连接宿主";
+    startButton.disabled = refreshButton.disabled = true;
+  }
+</script>
+</body>
+</html>

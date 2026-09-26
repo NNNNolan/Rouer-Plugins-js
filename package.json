@@ -1,0 +1,11 @@
+{
+  "name": "rouer-plugins-js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:forwardapi": "node sdk/js/build.mjs plugins/js-forwardapi",
+    "check": "npm --prefix sdk/js run check && npm --prefix sdk/js run check:docs",
+    "test": "node --test --test-isolation=none plugins/js-forwardapi/forwardapi.test.mjs",
+    "test:build": "node --test sdk/js/build.test.mjs"
+  }
+}

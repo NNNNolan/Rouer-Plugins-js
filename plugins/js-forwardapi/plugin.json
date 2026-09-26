@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "id": "js-forwardapi",
+  "name": "JS ForwardAPI",
+  "version": "1.0.0",
+  "runtime": "jint",
+  "hostApi": "1",
+  "format": "esm-bundle",
+  "entry": "src/plugin.ts",
+  "platform": {
+    "name": "js-forwardapi",
+    "displayName": "JS ForwardAPI",
+    "credentialKinds": ["Custom"],
+    "modelCacheTtlSeconds": 0
+  },
+  "hooks": {
+    "invoke": "invoke",
+    "getModels": "getModels",
+    "validateCredential": "validateCredential",
+    "selectAccounts": "selectAccounts"
+  },
+  "permissions": {
+    "accounts": ["read", "readCredentials", "write", "disable"],
+    "state": ["read", "write"],
+    "models": ["invalidate"],
+    "tasks": ["writeLog"],
+    "jobs": ["start", "read", "cancel"],
+    "crypto": ["hash", "encoding", "decimal"],
+    "http": {
+      "origins": [],
+      "routes": ["direct"],
+      "manageOrigins": true
+    }
+  },
+  "policy": {
+    "maxAttempts": 3,
+    "attemptTimeoutSeconds": 60,
+    "totalTimeoutSeconds": 180
+  },
+  "endpoints": [
+    { "method": "GET", "path": "accounts", "handler": "listAccounts", "auth": "AdminSession" },
+    { "method": "POST", "path": "accounts/save", "handler": "saveAccount", "auth": "AdminSession" },
+    { "method": "POST", "path": "accounts/delete", "handler": "deleteAccount", "auth": "AdminSession" },
+    { "method": "POST", "path": "models/discover", "handler": "discoverModels", "auth": "AdminSession" },
+    { "method": "POST", "path": "models/refresh", "handler": "refreshModels", "auth": "AdminSession" },
+    { "method": "POST", "path": "quota/refresh", "handler": "refreshQuota", "auth": "AdminSession" },
+    { "method": "POST", "path": "checkin/run", "handler": "runCheckIn", "auth": "AdminSession" },
+    { "method": "POST", "path": "checkin/start", "handler": "startCheckIn", "auth": "AdminSession" },
+    { "method": "GET", "path": "jobs/status", "handler": "jobStatus", "auth": "AdminSession" },
+    { "method": "POST", "path": "jobs/cancel", "handler": "cancelJob", "auth": "AdminSession" },
+    { "method": "GET", "path": "origins", "handler": "listOrigins", "auth": "AdminSession" },
+    { "method": "POST", "path": "origins/revoke", "handler": "revokeOrigin", "auth": "AdminSession" }
+  ],
+  "tasks": [
+    {
+      "name": "js-forwardapi-daily-checkin",
+      "handler": "dailyCheckIn",
+      "cron": "0 10 10 * * *",
+      "timeoutSeconds": 1800,
+      "description": "每天 10:10 为已启用且开启自动签到的账号执行签到"
+    }
+  ],
+  "jobs": [
+    {
+      "name": "js-forwardapi-checkin",
+      "handler": "checkInJob",
+      "timeoutSeconds": 180,
+      "description": "单账号后台签到，支持去重、进度、查询和取消"
+    }
+  ],
+  "page": {
+    "title": "JS ForwardAPI",
+    "entry": "ui/index.html"
+  }
+}

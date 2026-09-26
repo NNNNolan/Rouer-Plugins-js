@@ -1,0 +1,22 @@
+{
+  "name": "@router2api/plugin-sdk",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "types": "./index.d.ts",
+  "bin": {
+    "router2api-plugin-build": "./build.mjs",
+    "router2api-plugin-init": "./init.mjs"
+  },
+  "scripts": {
+    "check": "tsc --noEmit --strict --lib ES2022 index.d.ts",
+    "check:docs": "node check-docs.mjs",
+    "test": "node --test build.test.mjs"
+  },
+  "dependencies": {
+    "esbuild": "0.25.10"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "tutorial-echo",
+  "name": "JS 开发教程",
+  "version": "1.0.0",
+  "runtime": "jint",
+  "hostApi": "1",
+  "format": "esm-bundle",
+  "entry": "src/plugin.ts",
+  "platform": {
+    "name": "tutorial-echo",
+    "displayName": "无网络 Echo 教程",
+    "credentialKinds": ["ApiKey"],
+    "modelCacheTtlSeconds": 300
+  },
+  "hooks": {
+    "start": "start",
+    "getModels": "getModels",
+    "invoke": "invoke"
+  },
+  "permissions": {
+    "createAnonymousAccount": true,
+    "state": ["read", "write"],
+    "jobs": ["start", "read", "cancel"]
+  },
+  "policy": {
+    "maxAttempts": 1
+  },
+  "endpoints": [
+    { "method": "GET", "path": "status", "handler": "getStatus", "auth": "AdminSession" },
+    { "method": "POST", "path": "jobs/start", "handler": "startJob", "auth": "AdminSession" },
+    { "method": "GET", "path": "jobs/status", "handler": "getJob", "auth": "AdminSession" },
+    { "method": "POST", "path": "jobs/cancel", "handler": "cancelJob", "auth": "AdminSession" }
+  ],
+  "tasks": [
+    {
+      "name": "hourly-tick",
+      "handler": "hourlyTick",
+      "cron": "0 0 * * * *",
+      "timeoutSeconds": 10,
+      "description": "每小时更新本版本的演示计数，不访问网络或修改真实积分"
+    }
+  ],
+  "jobs": [
+    {
+      "name": "demo-progress",
+      "handler": "demoProgress",
+      "timeoutSeconds": 15,
+      "description": "可取消的演示进度，最多 20 步，不代表真实上游任务"
+    }
+  ],
+  "page": {
+    "title": "JS 开发教程",
+    "entry": "ui/index.html"
+  }
+}
