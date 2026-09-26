@@ -1,9 +1,9 @@
 /**
  * 无网络的教学插件：演示最小模型、管理端点、local state、Cron 和可取消 job。
  * 只导入开发期类型；构建产物没有 SDK 运行时依赖，ctx 由宿主注入。
- * 从仓库根目录执行：node sdk/js/build.mjs sdk/js/examples/tutorial-echo
+ * 从仓库根目录执行：node sdk/js/build.mjs plugins/tutorial-echo
  */
-import type { InvocationResult, Json, ModelDescriptor, PluginContext } from "../../../index";
+import type { InvocationResult, Json, ModelDescriptor, PluginContext } from "../../../sdk/js/index";
 
 /** 示例状态最多保存一天；local state 在版本替换后重新开始，不是永久业务数据。 */
 const STATE_TTL = { ttlSeconds: 86400 };

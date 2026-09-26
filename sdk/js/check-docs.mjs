@@ -18,7 +18,7 @@ const sdkDirectory = path.resolve(directory, "..");
 const repository = path.resolve(directory, "../..");
 const projects = [
   path.join(repository, "plugins", "js-forwardapi"),
-  path.join(directory, "examples", "tutorial-echo")
+  path.join(repository, "plugins", "tutorial-echo")
 ];
 const declarationPath = path.join(directory, "index.d.ts");
 const failures = [];

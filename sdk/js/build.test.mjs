@@ -30,7 +30,7 @@ test("TypeScript scaffold builds a bounded single ESM package without executing 
     assert.equal(manifest.hostApi, "1");
     assert.match(await fs.readFile(path.join(output, manifest.entry), "utf8"), /function invoke/);
     assert.match(await fs.readFile(path.join(output, manifest.entry), "utf8"), /bundled-helper/);
-    const sample = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../examples/plugins/js-proxy-demo");
+    const sample = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../plugins/js-proxy-demo");
     // 同时验证仓库示例的 job 声明与自包含页面会进入发行包。
     const sampleOutput = await buildPlugin(sample, path.join(base, "built-sample"));
     const sampleManifest = JSON.parse(await fs.readFile(path.join(sampleOutput, "plugin.json"), "utf8"));
@@ -61,7 +61,7 @@ test("TypeScript scaffold builds a bounded single ESM package without executing 
 test("Tutorial package documents working Echo, job validation, progress and cancellation with mock host capabilities", async () => {
   const base = await fs.mkdtemp(path.join(os.tmpdir(), "router2api-sdk-"));
   try {
-    const project = path.join(path.dirname(fileURLToPath(import.meta.url)), "examples", "tutorial-echo");
+    const project = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../plugins/tutorial-echo");
     const output = await buildPlugin(project, path.join(base, "tutorial-echo"));
     const manifest = JSON.parse(await fs.readFile(path.join(output, "plugin.json"), "utf8"));
     assert.equal(manifest.page.entry, "ui/index.html");

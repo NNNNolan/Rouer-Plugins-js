@@ -149,7 +149,7 @@ OAuth 刷新   → refreshCredential + accounts.refresh → 并发/CAS/保留冷
 
 ```powershell
 npm run check
-npm run build:forwardapi
+npm run build
 npm test
 git -c core.safecrlf=false diff --check
 ```

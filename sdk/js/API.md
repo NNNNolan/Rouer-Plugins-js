@@ -22,7 +22,7 @@ npm run build
 已有包可直接构建：
 
 ```powershell
-node sdk/js/build.mjs examples/plugins/js-proxy-demo artifacts/plugins/js-proxy-demo
+node sdk/js/build.mjs plugins/js-proxy-demo artifacts/plugins/js-proxy-demo
 ```
 
 示例不自动安装，也不会仅因编译而发送外部请求。示例的 Echo 无网络；手动后台检查和每日 Cron 会访问明确授权的 `example.com`。

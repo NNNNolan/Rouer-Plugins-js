@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "npm run build:forwardapi && npm run build:proxy-demo && npm run build:tutorial-echo",
     "build:forwardapi": "node sdk/js/build.mjs plugins/js-forwardapi",
+    "build:proxy-demo": "node sdk/js/build.mjs plugins/js-proxy-demo",
+    "build:tutorial-echo": "node sdk/js/build.mjs plugins/tutorial-echo",
     "check": "npm --prefix sdk/js run check && npm --prefix sdk/js run check:docs",
     "test": "node --test --test-isolation=none plugins/js-forwardapi/forwardapi.test.mjs",
     "test:build": "node --test sdk/js/build.test.mjs"

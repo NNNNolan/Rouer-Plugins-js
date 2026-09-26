@@ -10,7 +10,7 @@
 - [C#/JS 能力逐项对照](CAPABILITIES.md)
 - [带详细中文注释的 TypeScript 类型定义](index.d.ts)
 - [主案例 js-forwardapi](../../plugins/js-forwardapi/README.md)
-- [可安装示例：Echo、代理池、Cron、后台 job](../../examples/plugins/js-proxy-demo/)
+- [可安装示例：Echo、代理池、Cron、后台 job](../../plugins/js-proxy-demo/)
 - C# 宿主能力说明（参见 `Rouer-Plugins-Csharp/sdk/csharp/README.md`）
 
 开发工具：
@@ -26,7 +26,7 @@ node sdk/js/build.mjs ./my-plugin
 ```powershell
 npm run check
 npm test
-npm run build:forwardapi
+npm run build
 ```
 
 `check:docs` 不启动子进程/宿主、不执行插件；检查本地链接目标、中文类型注释、教学源码/清单类型和页面脚本语法。真正构建与运行时回归另见教程，不把静态通过等同于线上验证。

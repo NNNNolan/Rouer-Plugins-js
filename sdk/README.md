@@ -17,7 +17,7 @@
 npm --prefix sdk/js ci
 npm run check
 npm test
-npm run build:forwardapi
+npm run build
 ```
 
 `check:docs` 检查本地链接、中文注释、类型/语法和禁止 C# 项目的边界。Node 测试只模拟 ctx，不声称真实 Jint/上游通过。本仓库不添加 .NET 项目，也不通过宿主源码运行测试。

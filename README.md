@@ -10,8 +10,8 @@ Router2API 的 Jint JavaScript/TypeScript 插件仓库。生产插件运行在�
 | --- | --- |
 | `plugins/js-forwardapi` | 主案例：ForwardAPI 账号、模型/端点允许表、原始转发/SSE、额度、签到和页面 |
 | `sdk/js` | Host API 1 中文类型定义、脚手架/构建器 |
-| `sdk/js/examples/tutorial-echo` | SDK 工具链的无网络 smoke test，不是主开发教程 |
-| `examples/plugins/js-proxy-demo` | Echo + 独立代理池 HTTP 示例 |
+| `plugins/tutorial-echo` | SDK 工具链的无网络 smoke test，不是主开发教程 |
+| `plugins/js-proxy-demo` | Echo + 独立代理池 HTTP 示例 |
 | `sdk` | 人/AI 共用的开发教程和宿主生命周期说明 |
 
 `js-forwardapi` 移植自公开 C# ForwardAPI，管理权限、CAS、缓冲配额等差异见[插件说明](plugins/js-forwardapi/README.md)。这不表示其他未公开提供方已经迁移，也不表示真实账号已验收。
@@ -23,15 +23,24 @@ npm --prefix sdk/js ci
 npm run check
 npm test
 npm run test:build
-npm run build:forwardapi
+npm run build
 
-# 可选的无网络工具链 smoke test 插件。
-node sdk/js/build.mjs sdk/js/examples/tutorial-echo
-# 代理池示例。Echo 不联网；手动检查及每日 Cron 会访问 example.com。
-node sdk/js/build.mjs examples/plugins/js-proxy-demo
+# 也可单独打包：
+npm run build:forwardapi
+npm run build:proxy-demo
+npm run build:tutorial-echo
 ```
 
-主案例产物为 `plugins/js-forwardapi/dist/js-forwardapi`，包含发行清单、单个 ESM 和 HTML；只复制完整包到宿主 `plugins/js-forwardapi`。生产不用 npm，不复制 TS、node_modules、配置、测试或凭据。
+`npm run build` 打包全部三个插件，产物目录为：
+
+```text
+plugins/js-forwardapi/dist/js-forwardapi/
+plugins/js-proxy-demo/dist/js-proxy-demo/
+plugins/tutorial-echo/dist/tutorial-echo/
+```
+
+每个发行包包含清单、单个 ESM 和 HTML；只复制完整包到宿主对应的 `plugins/<id>`。生产不用 npm，不复制 TS、node_modules、配置、测试或凭据。
+`test:build` 仅在临时目录验证打包并在结束后清理，不会生成上述发行目录。打包不执行插件；`tutorial-echo` 无网络，`js-proxy-demo` 安装后的手动检查和每日 Cron 会访问 `example.com`。
 
 新建自己的项目：
 
