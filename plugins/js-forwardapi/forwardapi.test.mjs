@@ -199,14 +199,17 @@ test("未授权不联网；模型发现/保存用服务端匹配的目录而非�
 });
 test("修改密钥后必须重新发现；空密钥/密码保留原值，卡片掩码额外认证信息", async () => {
   const f = fixture();
-  f.seed("account-1", { password: "private-password", extraParams: '{"apiKeyHeader":"Authorization","loginHeaders":{"Authorization":"Bearer extra-secret"}}' });
+  f.seed("account-1", { password: "private-password", extraParams: '{"apiKeyHeader":"Authorization","loginHeaders":{"Authorization":"Bearer extra-secret"},"ReplaceHeaders":{"Authorization":"Bearer replacement-secret"}}' });
   const listed = await plugin.listAccounts(f.context({}));
   assert.ok(!JSON.stringify(listed).includes("private-password"));
   assert.ok(!JSON.stringify(listed).includes("extra-secret"));
+  assert.ok(!JSON.stringify(listed).includes("replacement-secret"));
   assert.match(listed.body.accounts[0].extraParams, /Authorization/);
   const edited = await plugin.saveAccount(f.context({ id: "account-1", label: "renamed", apiKey: "", password: "", extraParams: listed.body.accounts[0].extraParams }));
   assert.equal(edited.statusCode, 200);
-  assert.equal(JSON.parse(f.database.get("account-1").credential.fields.settings).password, "private-password");
+  const savedSettings = JSON.parse(f.database.get("account-1").credential.fields.settings);
+  assert.equal(savedSettings.password, "private-password");
+  assert.equal(JSON.parse(savedSettings.extraParams).ReplaceHeaders.Authorization, "Bearer replacement-secret");
   assert.equal((await plugin.saveAccount(f.context({ id: "account-1", label: "renamed", apiKey: "replacement-key", models: ["model-a"] }))).statusCode, 409);
 });
 test("批量选号仅使用允许表/端点/权重，目录刷新不自动扩大允许模型", async () => {
@@ -237,6 +240,81 @@ test("原始非流式字节不被 stringify，请求使用原生 JSON 编辑并�
   assert.equal(f.calls[0].headers["anthropic-version"], "2023-06-01");
   assert.equal(f.calls[0].route, "direct");
   assert.equal(f.calls[0].followRedirects, false);
+});
+test("ReplaceHeaders 在四种端点的流式/非流式转发中最后覆盖同名头并新增缺失头", async () => {
+  const userAgent = "claude-cli/2.1.161 (external, cli)";
+  for (const endpoint of settings().endpoints) {
+    for (const stream of [false, true]) {
+      const f = fixture();
+      f.seed("account-1", { extraParams: JSON.stringify({
+        apiKeyHeader: "X-Upstream-Key",
+        ReplaceHeaders: {
+          "User-Agent": "first-value", "user-agent": userAgent, "X-Added": "configured",
+          "X-Upstream-Key": "replacement-key", "Content-Type": "application/json; profile=forwardapi",
+          "anthropic-version": "2023-06-01"
+        }
+      }) });
+      const ctx = f.context(null, { phase: "Terminal" });
+      Object.assign(ctx.request, { endpoint, stream, headers: {
+        "USER-AGENT": "downstream-client", "x-upstream-key": "downstream-key", "X-Trace": "trace-123",
+        "anthropic-version": "old-version", "Content-Type": "application/downstream"
+      } });
+      const originalHeaders = clone(ctx.request.headers);
+      const result = await plugin.invoke(ctx);
+      assert.equal(result.response.kind, "raw");
+      assert.equal(f.calls.length, 1);
+      assert.deepEqual(f.calls[0].headers, {
+        "user-agent": userAgent, "x-upstream-key": "replacement-key", "x-trace": "trace-123",
+        "anthropic-version": "2023-06-01", "x-added": "configured",
+        "content-type": "application/json; profile=forwardapi"
+      });
+      assert.deepEqual(ctx.request.headers, originalHeaders);
+      assert.equal(f.sources.size, stream ? 1 : 0);
+    }
+  }
+});
+test("ReplaceHeaders 可显式覆盖账号默认认证头", async () => {
+  for (const [endpoint, header] of [["/v1/chat/completions", "Authorization"], ["/v1/messages", "X-Api-Key"]]) {
+    const f = fixture();
+    f.seed("account-1", { extraParams: JSON.stringify({ ReplaceHeaders: { [header]: "configured-key" } }) });
+    const ctx = f.context(null, { phase: "Terminal" });
+    ctx.request.endpoint = endpoint;
+    assert.equal((await plugin.invoke(ctx)).response.kind, "raw");
+    assert.equal(f.calls[0].headers[header.toLowerCase()], "configured-key");
+  }
+});
+test("ReplaceHeaders 只使用当前账号配置，缺省/空对象不改变原头，也不影响模型发现", async () => {
+  const f = fixture();
+  for (const [id, extraParams, expected] of [
+    ["overridden", '{"ReplaceHeaders":{"User-Agent":"configured-client"}}', "configured-client"],
+    ["missing", "{}", "downstream-client"],
+    ["empty", '{"ReplaceHeaders":{}}', "downstream-client"]
+  ]) {
+    f.seed(id, { extraParams });
+    const ctx = f.context(null, { phase: "Terminal", account: { id } });
+    ctx.request.headers["User-Agent"] = "downstream-client";
+    assert.equal((await plugin.invoke(ctx)).response.kind, "raw");
+    assert.equal(f.calls.at(-1).headers["user-agent"], expected);
+    assert.equal(f.calls.at(-1).headers.authorization, "Bearer secret-upstream-key");
+  }
+  const discovered = await plugin.discoverModels(f.context({ id: "overridden" }));
+  assert.equal(discovered.statusCode, 200);
+  assert.equal(f.calls.at(-1).headers["user-agent"], undefined);
+});
+test("ReplaceHeaders 拒绝非对象、非字符串、危险头和控制字符，校验失败不发送上游请求", async () => {
+  for (const replacements of [
+    null, [], "{}", { "X-Test": 1 }, { "X-Test": null }, { "Bad Header": "value" },
+    { "User-Agent": "client\r\nX-Injected: value" }, { "User-Agent": "client\u0085value" },
+    ...["Host", "Connection", "Content-Length", "Transfer-Encoding", "Upgrade", "Proxy-Authorization", "Cookie", "Set-Cookie"]
+      .map(name => ({ [name]: "value" }))
+  ]) {
+    const f = fixture(), extraParams = JSON.stringify({ ReplaceHeaders: replacements });
+    f.seed("account-1", { extraParams });
+    assert.equal((await plugin.invoke(f.context(null, { phase: "Terminal" }))).response.statusCode, 400, extraParams);
+    assert.equal((await plugin.discoverModels(f.context({ ...settings(), extraParams }))).statusCode, 400, extraParams);
+    assert.equal((await plugin.saveAccount(f.context({ label: "invalid", ...settings(), extraParams, models: ["model-a"] }))).statusCode, 400, extraParams);
+    assert.equal(f.calls.length, 0);
+  }
 });
 test("SSE 只移交 source，不在插件中读取或关闭，不重发生成请求", async () => {
   const f = fixture(); f.seed();

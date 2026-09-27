@@ -38,6 +38,25 @@ npm run build:forwardapi
 
 C# 版本的账号不会自动复制过来。请在独立命名空间重新录入，不通过跨插件查询共享凭据。
 
+## 替换或新增转发请求头
+
+在对应上游账号的“额外参数”中加入 `ReplaceHeaders`，保留已有的其他配置字段，例如替换 User-Agent：
+
+```json
+{
+  "ReplaceHeaders": {
+    "User-Agent": "claude-cli/2.1.161 (external, cli)"
+  }
+}
+```
+
+- 请求头名称不区分大小写：已有头直接替换，不存在的头新增；未配置或配置 `{}` 时保持原行为。
+- 覆盖项在下游头、账号认证头和协议默认头之后应用，显式配置的认证头也会覆盖默认值。
+- 仅作用于当前账号的四种模型转发端点（含流式），不用于模型发现、额度、登录或签到。
+- `ReplaceHeaders` 必须是 JSON 对象，值必须是字符串。拒绝控制字符及 Host、Connection、Content-Length、Cookie 等危险请求头。
+
+修改后按页面要求重新获取模型并保存账号。签到和登录请求头仍使用 `checkInHeaders` / `loginHeaders`。
+
 ## 管理 API
 
 所有端点都是当前插件相对路径，使用管理员会话/CSRF：

@@ -120,10 +120,24 @@ export function headerName(name: string): string {
   return name;
 }
 export function headerValue(value: string): string {
-  if (/[\u0000-\u001f\u007f]/.test(value)) throw new ApiError(400, "请求头值不能包含控制字符");
+  if (/[\u0000-\u001f\u007f-\u009f]/.test(value)) throw new ApiError(400, "请求头值不能包含控制字符");
   return value;
 }
 export function extra(settings: Settings): ObjectValue { return parseObject(settings.extraParams || "{}", "额外参数"); }
+
+/** 解析当前账号的转发头覆盖项；统一小写，确保同名头替换而不是追加。 */
+export function replacementHeaders(params: ObjectValue): Record<string, string> {
+  if (params.ReplaceHeaders === undefined) return {};
+  if (!isObject(params.ReplaceHeaders)) throw new ApiError(400, "ReplaceHeaders 必须是 JSON 对象");
+  const headers: Record<string, string> = {};
+  for (const [name, value] of Object.entries(params.ReplaceHeaders)) {
+    if (typeof value !== "string") throw new ApiError(400, "ReplaceHeaders 的请求头值必须是字符串");
+    const key = headerName(name).toLowerCase();
+    if (key === "cookie") throw new ApiError(400, "ReplaceHeaders 不允许设置 Cookie");
+    headers[key] = headerValue(value);
+  }
+  return headers;
+}
 
 /** 解析 C# 的 Custom.fields.settings 形状，未配置的字段使用相同默认值。 */
 export function settingsFrom(ctx: PluginContext, value: unknown): Settings {
@@ -147,6 +161,7 @@ export function settingsFrom(ctx: PluginContext, value: unknown): Settings {
     if (params[name] !== undefined) headerName(text(params[name]));
   for (const name of ["loginPath", "checkInPath"])
     if (params[name] !== undefined) sitePath(text(params[name]));
+  replacementHeaders(params);
   return {
     siteType, baseUrl: baseUrl(ctx, text(field(raw, "baseUrl"))), apiKey,
     username: text(field(raw, "username")), password: text(field(raw, "password")),

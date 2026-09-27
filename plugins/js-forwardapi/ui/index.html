@@ -42,7 +42,7 @@
         </div></div>
         <div class="field full"><label for="models">该 API Key 允许使用的模型</label><textarea id="models" name="models" spellcheck="false" placeholder="点击下方候选模型进行选择" readonly></textarea><span class="hint">首次添加或修改站点/API Key 后先获取可用模型；已获取过且凭据未改时可直接保存。仅选中的模型会提供给下游并参与账号路由。</span><div class="chips" id="modelCandidates"></div></div>
         <div class="field full"><div class="switches"><label><input type="checkbox" name="enabled" checked> 启用账号</label><label><input type="checkbox" name="autoCheckIn"> 每日自动签到</label></div></div>
-        <div class="field full"><label for="extraParams">额外参数（JSON 对象）</label><textarea id="extraParams" name="extraParams" spellcheck="false">{}</textarea><span class="hint">apiKeyHeader/apiKeyPrefix 用于模型拉取和转发；NewAPI 额度默认单独使用 Authorization: Bearer，可用 quotaApiKeyHeader/quotaApiKeyPrefix 覆盖。签到可配置 checkInPath、checkInMethod、checkInBody、checkInHeaders；Cookie 可通过 loginHeaders/checkInHeaders 配置。</span></div>
+        <div class="field full"><label for="extraParams">额外参数（JSON 对象）</label><textarea id="extraParams" name="extraParams" spellcheck="false">{}</textarea><span class="hint">ReplaceHeaders 可替换/新增转发请求头，如 {"ReplaceHeaders":{"User-Agent":"claude-cli/2.1.161 (external, cli)"}}（头名不区分大小写，仅影响模型转发）。apiKeyHeader/apiKeyPrefix 用于模型拉取和转发；NewAPI 额度默认单独使用 Authorization: Bearer，可用 quotaApiKeyHeader/quotaApiKeyPrefix 覆盖。签到可配置 checkInPath、checkInMethod、checkInBody、checkInHeaders；Cookie 可通过 loginHeaders/checkInHeaders 配置。</span></div>
       </div>
       <div class="dialog-actions"><button type="button" class="btn" data-close="editor">取消</button><button class="btn primary" type="submit" id="save">保存账号</button></div>
     </form>

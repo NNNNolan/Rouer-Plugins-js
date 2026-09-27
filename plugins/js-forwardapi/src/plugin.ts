@@ -7,8 +7,8 @@ import * as accounts from "./accounts";
 import * as checkin from "./checkin";
 import { refreshQuota as refreshQuotaCore } from "./quota";
 import {
-  ApiError, authHeaders, buildUrl, cancelled, describe, endpoint, field, headerName, headerValue,
-  log, recordFrom, sanitize, storedJson, type Settings
+  ApiError, authHeaders, buildUrl, cancelled, describe, endpoint, extra, field, headerName, headerValue,
+  log, recordFrom, replacementHeaders, sanitize, storedJson, type Settings
 } from "./common";
 
 export { getModels, selectAccounts, validateCredential } from "./accounts";
@@ -67,6 +67,8 @@ export async function invoke(ctx: PluginContext): Promise<InvocationResult> {
     // 先去掉由账号控制的认证头，避免下游 x-* 自定义头覆盖当前账号的密钥。
     for (const [name, value] of Object.entries(authHeaders(settings, ctx.request.endpoint))) headers[name.toLowerCase()] = value;
     if (ctx.request.endpoint.toLowerCase() === "/v1/messages") headers["anthropic-version"] ??= "2023-06-01";
+    // 管理员按上游账号配置的替换项最后应用，也可新增下游未携带的请求头。
+    Object.assign(headers, replacementHeaders(extra(settings)));
     const source = await ctx.http.open({
       method: "POST", route: "direct", url: buildUrl(ctx, settings.baseUrl, ctx.request.endpoint),
       headers, followRedirects: false,

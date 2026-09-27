@@ -1012,6 +1012,8 @@ export interface PluginManifest {
   id: string;
   /** 非空显示名，不用于资源归属。 */
   name: string;
+  /** 插件简介，用于宿主管理卡片和发行索引展示。 */
+  description?: string;
   /** 非空业务版本，建议使用语义版本；不决定宿主 Jint/NuGet 版本。 */
   version: string;
   /** 运行时固定 Jint，不能在包中指定 Node 或另一个 CLR 解释器。 */

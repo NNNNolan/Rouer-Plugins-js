@@ -121,7 +121,7 @@ const source = await ctx.http.open({
 
 url/headers 来自当前已验证账号。只有指定顶层字段改变，其他原始字段由宿主保留；不能先 parse/stringify 全部原文而丢失大整数，也不能将工具、图片、文件和推理缩成文本。
 
-Messages 默认 x-api-key、anthropic-version；其他入口默认 Bearer。当前账号的认证头覆盖下游同名自定义头。URL 组合保留部署子路径、消除重复 /v1。
+Messages 默认 x-api-key、anthropic-version；其他入口默认 Bearer。当前账号的认证头覆盖下游同名自定义头，最后应用额外参数 `ReplaceHeaders`，按头名不区分大小写替换或新增；示例和限制见[插件说明](../../plugins/js-forwardapi/README.md#替换或新增转发请求头)。URL 组合保留部署子路径、消除重复 /v1。
 
 ## 8. raw/SSE 所有权
 
