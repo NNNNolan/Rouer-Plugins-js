@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "id": "tutorial-echo",
   "name": "JS 开发教程",
+  "description": "无网络依赖的 Echo 教学插件，用于学习 JS 插件清单、构建与宿主加载。",
   "version": "1.0.0",
   "runtime": "jint",
   "hostApi": "1",

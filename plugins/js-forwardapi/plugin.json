@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "id": "js-forwardapi",
   "name": "JS ForwardAPI",
+  "description": "将 NewAPI、Sub2API 和自定义站点接入 Router2API，支持账号管理、模型发现、请求转发、额度查询与签到。",
   "version": "1.0.0",
   "runtime": "jint",
   "hostApi": "1",

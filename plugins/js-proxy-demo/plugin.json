@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "id": "js-proxy-demo",
   "name": "JS 代理池示例",
+  "description": "演示 Jint 插件通过宿主代理池发送 HTTP 请求，并提供 Echo 接口与定时任务。",
   "version": "1.0.0",
   "runtime": "jint",
   "hostApi": "1",

@@ -42,6 +42,16 @@ plugins/tutorial-echo/dist/tutorial-echo/
 每个发行包包含清单、单个 ESM 和 HTML；只复制完整包到宿主对应的 `plugins/<id>`。生产不用 npm，不复制 TS、node_modules、配置、测试或凭据。
 `test:build` 仅在临时目录验证打包并在结束后清理，不会生成上述发行目录。打包不执行插件；`tutorial-echo` 无网络，`js-proxy-demo` 安装后的手动检查和每日 Cron 会访问 `example.com`。
 
+## GitHub Release 发行索引
+
+推送 `v1.2.3` 形式的 tag 后，GitHub Actions 会扫描 `plugins/*/plugin.json`，逐个调用 SDK 构建器，为每个插件上传独立的 `<id>.zip`，并上传 `release-index.json`。每个插件的 `plugin.json` 必须填写 `description`；它会进入索引，并在 Release 正文中与插件版本、下载文件一同展示。正文末尾附仓库变更记录。新增插件无需修改工作流；若项目引入自己的 npm 依赖，需先让其构建依赖在工作流中可安装。ZIP 内保留 `<id>/` 顶层目录，解压到宿主 `plugins/` 后才是正确的安装结构。
+
+Release 标题为 `JS 插件 <tag>`。如需写本次发布的专属说明，在打 tag 前提交 `release-notes/<tag>.md`，例如 `release-notes/v1.2.3.md`；工作流会把它放在插件介绍与自动生成的仓库变更之间。没有该文件也能正常发布。插件的长期描述仍在各自 `plugin.json` 的 `description` 中维护。
+
+索引字段和宿主订阅建议见 `Router2API/sdk/PLUGIN-RELEASES.md`。`sha256` 校验 ZIP 下载，`contentSha256` 按包内文件内容判断该插件是否真的有更新。索引中的 `version` 来自构建后的 `plugin.json`，Release 的 `tag` 是本仓库整批产物的发布标识，二者可以不同。工作流使用仓库自带的 `GITHUB_TOKEN`，需要允许 Actions 创建 Release 的 `contents: write` 权限。
+
+本地只生成待上传产物可先执行 `npm --prefix sdk/js ci`，对每个 `plugins/*/plugin.json` 调用 `node sdk/js/build.mjs <插件目录>`，随后运行 `pwsh -File ./package-release.ps1 -Tag v1.2.3`。后一个脚本要求输出目录为空，避免混入前一次的资产。
+
 新建自己的项目：
 
 ```powershell
