@@ -1,6 +1,6 @@
 # Rouer-Plugins-js
 
-Router2API 的 Jint JavaScript/TypeScript 插件仓库。生产插件运行在宿主内的 **Jint 4.16.4**，Node 只用于开发、类型检查和打包。
+[Router2API 宿主](https://github.com/NNNNolan/Router2API)的 Jint JavaScript/TypeScript 插件仓库。生产插件运行在宿主内的 **Jint 4.16.4**，Node 只用于开发、类型检查和打包。C# 插件见 [Rouer-Plugins-Csharp](https://github.com/NNNNolan/Rouer-Plugins-Csharp)。
 
 本仓库只包含 JS/TS 插件、SDK、页面与 **Node 模拟测试**，禁止 C#、csproj、sln 和依赖宿主源码的测试项目。可独立检查/打包；运行插件需要另行安装 Router2API。
 
@@ -14,7 +14,7 @@ Router2API 的 Jint JavaScript/TypeScript 插件仓库。生产插件运行在�
 | `plugins/js-proxy-demo` | Echo + 独立代理池 HTTP 示例 |
 | `sdk` | 人/AI 共用的开发教程和宿主生命周期说明 |
 
-`js-forwardapi` 移植自公开 C# ForwardAPI，管理权限、CAS、缓冲配额等差异见[插件说明](plugins/js-forwardapi/README.md)。这不表示其他未公开提供方已经迁移，也不表示真实账号已验收。
+`js-forwardapi` 移植自[公开的 C# ForwardAPI](https://github.com/NNNNolan/Rouer-Plugins-Csharp/tree/main/src/Plugins.ForwardAPI)，管理权限、CAS、缓冲配额等差异见[插件说明](plugins/js-forwardapi/README.md)。这不表示其他未公开提供方已经迁移，也不表示真实账号已验收。
 
 ## 开发与构建
 
@@ -44,11 +44,11 @@ plugins/tutorial-echo/dist/tutorial-echo/
 
 ## GitHub Release 发行索引
 
-推送 `v1.2.3` 形式的 tag 后，GitHub Actions 会扫描 `plugins/*/plugin.json`，逐个调用 SDK 构建器，为每个插件上传独立的 `<id>.zip`，并上传 `release-index.json`。每个插件的 `plugin.json` 必须填写 `description`；它会进入索引，并在 Release 正文中与插件版本、下载文件一同展示。正文末尾附仓库变更记录。新增插件无需修改工作流；若项目引入自己的 npm 依赖，需先让其构建依赖在工作流中可安装。ZIP 内保留 `<id>/` 顶层目录，解压到宿主 `plugins/` 后才是正确的安装结构。
+推送 `v1.2.3` 形式的 tag 后，GitHub Actions 会扫描 `plugins/*/plugin.json`，逐个调用 SDK 构建器，为每个插件上传独立的 `<id>.zip`，并将 `release-index.json` 一同上传到[本仓库的 GitHub Releases](https://github.com/NNNNolan/Rouer-Plugins-js/releases)。每个插件的 `plugin.json` 必须填写 `description`；它会进入索引，并在 Release 正文中与插件版本、下载文件一同展示。正文末尾附仓库变更记录。新增插件无需修改工作流；若项目引入自己的 npm 依赖，需先让其构建依赖在工作流中可安装。ZIP 内保留 `<id>/` 顶层目录，解压到宿主 `plugins/` 后才是正确的安装结构。
 
 Release 标题为 `JS 插件 <tag>`。如需写本次发布的专属说明，在打 tag 前提交 `release-notes/<tag>.md`，例如 `release-notes/v1.2.3.md`；工作流会把它放在插件介绍与自动生成的仓库变更之间。没有该文件也能正常发布。插件的长期描述仍在各自 `plugin.json` 的 `description` 中维护。
 
-索引字段和宿主订阅建议见 `Router2API/sdk/PLUGIN-RELEASES.md`。`sha256` 校验 ZIP 下载，`contentSha256` 按包内文件内容判断该插件是否真的有更新。索引中的 `version` 来自构建后的 `plugin.json`，Release 的 `tag` 是本仓库整批产物的发布标识，二者可以不同。工作流使用仓库自带的 `GITHUB_TOKEN`，需要允许 Actions 创建 Release 的 `contents: write` 权限。
+索引字段和宿主订阅建议见[宿主的插件发行索引规范](https://github.com/NNNNolan/Router2API/blob/main/sdk/PLUGIN-RELEASES.md)。`sha256` 校验 ZIP 下载，`contentSha256` 按包内文件内容判断该插件是否真的有更新。索引中的 `version` 来自构建后的 `plugin.json`，Release 的 `tag` 是本仓库整批产物的发布标识，二者可以不同。工作流使用仓库自带的 `GITHUB_TOKEN`，需要允许 Actions 创建 Release 的 `contents: write` 权限。
 
 本地只生成待上传产物可先执行 `npm --prefix sdk/js ci`，对每个 `plugins/*/plugin.json` 调用 `node sdk/js/build.mjs <插件目录>`，随后运行 `pwsh -File ./package-release.ps1 -Tag v1.2.3`。后一个脚本要求输出目录为空，避免混入前一次的资产。
 
