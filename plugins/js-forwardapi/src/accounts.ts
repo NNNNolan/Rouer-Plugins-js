@@ -5,8 +5,8 @@
 import type { AccountSelectionInput, Credential, PluginContext } from "../../../sdk/js/index";
 import {
   ApiError, ENDPOINTS, SECRET_PLACEHOLDER, accountId, allowedModels, authHeaders, authorize, baseUrl,
-  buildUrl, cancelled, describe, field, input, isObject, log, modelIds, parseObject, patchCredential,
-  readAccount, recordFrom, records, requestText, settingsFrom, storedJson, text,
+  buildUrl, cancelled, describe, extra, field, input, isObject, log, modelIds, parseObject, patchCredential,
+  readAccount, recordFrom, records, replacementHeaders, requestText, settingsFrom, storedJson, text,
   type AccountRecord, type Settings
 } from "./common";
 
@@ -74,8 +74,11 @@ function discoveryKey(ctx: PluginContext, settings: Settings): string {
 }
 /** GET /v1/models；没有模型、非法 JSON、业务失败都不伪装为一个成功空目录。 */
 export async function fetchModels(ctx: PluginContext, settings: Settings): Promise<string[]> {
+  // 与转发共用覆盖规则；先统一头名，避免大小写不同的认证头被追加成多值。
+  const headers = Object.fromEntries(Object.entries(authHeaders(settings)).map(([name, value]) => [name.toLowerCase(), value]));
+  Object.assign(headers, replacementHeaders(extra(settings)));
   const response = await requestText(ctx, {
-    url: buildUrl(ctx, settings.baseUrl, "/v1/models"), headers: authHeaders(settings)
+    url: buildUrl(ctx, settings.baseUrl, "/v1/models"), headers
   });
   if (response.statusCode < 200 || response.statusCode >= 300)
     throw new ApiError(response.statusCode >= 400 ? response.statusCode : 502, describe(response.statusCode, response.bodyText, settings));

@@ -3,7 +3,7 @@
   "id": "js-forwardapi",
   "name": "JS ForwardAPI",
   "description": "将 NewAPI、Sub2API 和自定义站点接入 Router2API，支持账号管理、模型发现、请求转发、额度查询与签到。",
-  "version": "1.0.0",
+  "version": "2.0.1",
   "runtime": "jint",
   "hostApi": "1",
   "format": "esm-bundle",
@@ -11,7 +11,9 @@
   "platform": {
     "name": "js-forwardapi",
     "displayName": "JS ForwardAPI",
-    "credentialKinds": ["Custom"],
+    "credentialKinds": [
+      "Custom"
+    ],
     "modelCacheTtlSeconds": 0
   },
   "hooks": {
@@ -21,15 +23,37 @@
     "selectAccounts": "selectAccounts"
   },
   "permissions": {
-    "accounts": ["read", "readCredentials", "write", "disable"],
-    "state": ["read", "write"],
-    "models": ["invalidate"],
-    "tasks": ["writeLog"],
-    "jobs": ["start", "read", "cancel"],
-    "crypto": ["hash", "encoding", "decimal"],
+    "accounts": [
+      "read",
+      "readCredentials",
+      "write",
+      "disable"
+    ],
+    "state": [
+      "read",
+      "write"
+    ],
+    "models": [
+      "invalidate"
+    ],
+    "tasks": [
+      "writeLog"
+    ],
+    "jobs": [
+      "start",
+      "read",
+      "cancel"
+    ],
+    "crypto": [
+      "hash",
+      "encoding",
+      "decimal"
+    ],
     "http": {
       "origins": [],
-      "routes": ["direct"],
+      "routes": [
+        "direct"
+      ],
       "manageOrigins": true
     }
   },
@@ -39,18 +63,78 @@
     "totalTimeoutSeconds": 180
   },
   "endpoints": [
-    { "method": "GET", "path": "accounts", "handler": "listAccounts", "auth": "AdminSession" },
-    { "method": "POST", "path": "accounts/save", "handler": "saveAccount", "auth": "AdminSession" },
-    { "method": "POST", "path": "accounts/delete", "handler": "deleteAccount", "auth": "AdminSession" },
-    { "method": "POST", "path": "models/discover", "handler": "discoverModels", "auth": "AdminSession" },
-    { "method": "POST", "path": "models/refresh", "handler": "refreshModels", "auth": "AdminSession" },
-    { "method": "POST", "path": "quota/refresh", "handler": "refreshQuota", "auth": "AdminSession" },
-    { "method": "POST", "path": "checkin/run", "handler": "runCheckIn", "auth": "AdminSession" },
-    { "method": "POST", "path": "checkin/start", "handler": "startCheckIn", "auth": "AdminSession" },
-    { "method": "GET", "path": "jobs/status", "handler": "jobStatus", "auth": "AdminSession" },
-    { "method": "POST", "path": "jobs/cancel", "handler": "cancelJob", "auth": "AdminSession" },
-    { "method": "GET", "path": "origins", "handler": "listOrigins", "auth": "AdminSession" },
-    { "method": "POST", "path": "origins/revoke", "handler": "revokeOrigin", "auth": "AdminSession" }
+    {
+      "method": "GET",
+      "path": "accounts",
+      "handler": "listAccounts",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "POST",
+      "path": "accounts/save",
+      "handler": "saveAccount",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "POST",
+      "path": "accounts/delete",
+      "handler": "deleteAccount",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "POST",
+      "path": "models/discover",
+      "handler": "discoverModels",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "POST",
+      "path": "models/refresh",
+      "handler": "refreshModels",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "POST",
+      "path": "quota/refresh",
+      "handler": "refreshQuota",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "POST",
+      "path": "checkin/run",
+      "handler": "runCheckIn",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "POST",
+      "path": "checkin/start",
+      "handler": "startCheckIn",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "GET",
+      "path": "jobs/status",
+      "handler": "jobStatus",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "POST",
+      "path": "jobs/cancel",
+      "handler": "cancelJob",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "GET",
+      "path": "origins",
+      "handler": "listOrigins",
+      "auth": "AdminSession"
+    },
+    {
+      "method": "POST",
+      "path": "origins/revoke",
+      "handler": "revokeOrigin",
+      "auth": "AdminSession"
+    }
   ],
   "tasks": [
     {

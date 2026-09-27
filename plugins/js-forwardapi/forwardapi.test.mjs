@@ -283,7 +283,7 @@ test("ReplaceHeaders 可显式覆盖账号默认认证头", async () => {
     assert.equal(f.calls[0].headers[header.toLowerCase()], "configured-key");
   }
 });
-test("ReplaceHeaders 只使用当前账号配置，缺省/空对象不改变原头，也不影响模型发现", async () => {
+test("ReplaceHeaders 在转发和模型发现中只使用当前账号配置，缺省/空对象保持原行为", async () => {
   const f = fixture();
   for (const [id, extraParams, expected] of [
     ["overridden", '{"ReplaceHeaders":{"User-Agent":"configured-client"}}', "configured-client"],
@@ -296,10 +296,38 @@ test("ReplaceHeaders 只使用当前账号配置，缺省/空对象不改变原�
     assert.equal((await plugin.invoke(ctx)).response.kind, "raw");
     assert.equal(f.calls.at(-1).headers["user-agent"], expected);
     assert.equal(f.calls.at(-1).headers.authorization, "Bearer secret-upstream-key");
+    const discovered = await plugin.discoverModels(f.context({ id }));
+    assert.equal(discovered.statusCode, 200);
+    assert.equal(f.calls.at(-1).headers["user-agent"], id === "overridden" ? "configured-client" : undefined);
   }
-  const discovered = await plugin.discoverModels(f.context({ id: "overridden" }));
-  assert.equal(discovered.statusCode, 200);
-  assert.equal(f.calls.at(-1).headers["user-agent"], undefined);
+});
+test("首次获取、已有账号获取和刷新模型均应用 ReplaceHeaders，并覆盖认证头而不是追加", async () => {
+  for (const keyHeader of ["Authorization", "X-Upstream-Key"]) {
+    const f = fixture(), userAgent = "claude-cli/2.1.161 (external, cli)";
+    const extraParams = JSON.stringify({
+      apiKeyHeader: keyHeader,
+      ReplaceHeaders: {
+        "User-Agent": "first-value", "user-agent": userAgent,
+        [keyHeader.toLowerCase()]: "replacement-key", "X-Added": "configured"
+      }
+    });
+    f.seed("account-1", { extraParams });
+    const results = [
+      await plugin.discoverModels(f.context({ ...settings(), extraParams })),
+      await plugin.discoverModels(f.context({ id: "account-1" })),
+      await plugin.refreshModels(f.context({ id: "account-1" }))
+    ];
+    assert.ok(results.every(result => result.statusCode === 200));
+    assert.equal(f.calls.length, 3);
+    for (const call of f.calls) {
+      assert.equal(call.method ?? "GET", "GET");
+      assert.equal(call.url, "https://upstream.example/v1/models");
+      assert.deepEqual(call.headers, {
+        [keyHeader.toLowerCase()]: "replacement-key", "user-agent": userAgent, "x-added": "configured"
+      });
+    }
+    assert.deepEqual(JSON.parse(f.database.get("account-1").credential.fields.models), ["model-a"]);
+  }
 });
 test("ReplaceHeaders 拒绝非对象、非字符串、危险头和控制字符，校验失败不发送上游请求", async () => {
   for (const replacements of [
@@ -312,6 +340,7 @@ test("ReplaceHeaders 拒绝非对象、非字符串、危险头和控制字符�
     f.seed("account-1", { extraParams });
     assert.equal((await plugin.invoke(f.context(null, { phase: "Terminal" }))).response.statusCode, 400, extraParams);
     assert.equal((await plugin.discoverModels(f.context({ ...settings(), extraParams }))).statusCode, 400, extraParams);
+    assert.equal((await plugin.refreshModels(f.context({ id: "account-1" }))).statusCode, 400, extraParams);
     assert.equal((await plugin.saveAccount(f.context({ label: "invalid", ...settings(), extraParams, models: ["model-a"] }))).statusCode, 400, extraParams);
     assert.equal(f.calls.length, 0);
   }

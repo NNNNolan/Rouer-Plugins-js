@@ -123,6 +123,8 @@ url/headers 来自当前已验证账号。只有指定顶层字段改变，其�
 
 Messages 默认 x-api-key、anthropic-version；其他入口默认 Bearer。当前账号的认证头覆盖下游同名自定义头，最后应用额外参数 `ReplaceHeaders`，按头名不区分大小写替换或新增；示例和限制见[插件说明](../../plugins/js-forwardapi/README.md#替换或新增转发请求头)。URL 组合保留部署子路径、消除重复 /v1。
 
+模型获取和刷新共用 `fetchModels`，其 `GET /v1/models` 也在生成账号认证头后应用 `ReplaceHeaders`；额度查询、登录和签到不使用这组覆盖项。
+
 ## 8. raw/SSE 所有权
 
 - 上游 SSE 或下游要求 stream 时，`return ctx.reply.raw(source)`。
